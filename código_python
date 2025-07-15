@@ -81,3 +81,35 @@ if __name__ == '__main__':
     plt.grid()
     plt.legend(['C', 'C - Os'])
     plt.show()
+
+//coeficiente de pearson//
+
+" (2.0 puntos) Implementar una función en Python que reciba los arreglos x e y y
+ calcule el coeficiente de Pearson. Deberá probar su función creando arreglos desde
+ la función principal para un tamaño de 16 elementos con tamaño de 2 bytes enteros.
+ Comparar su función con lo obtenido por la función np.corrcoef(x,y). Adjuntar una
+ captura de pantalla en su reporte para validar su funcionamiento.
+ b) (2.0 puntos) Implementar una función en C la cual será llamada desde Python que
+ calcule el coeficiente de Pearson. Realizar el llamado a través de ctypes
+ considerando los tipos de datos mencionados en a). Validar el funcionamiento de su
+ implementación imprimiendo en el terminal el resultado de su inciso en a) y lo
+ obtenido por la función np.corrcoef() y adjuntarlo en su reporte.
+ c) (1.0 puntos) Generar un diferente archivo de sistema utilizando un optimizador
+ diferente al que se genera por default para su función en C. Realizar el llamado a
+ través de ctypes considerando los tipos de datos mencionados en a). Validar el
+ funcionamiento de su implementación imprimiendo en el terminal el resultado de su
+ inciso en a), en b) y lo obtenido por la función np.corrcoef() y adjuntarlo en su
+ reporte.
+ d) (2.0 puntos) Realizar un análisis temporal acerca de las funciones utilizando
+ diferentes tamaños del arreglo. Considerar que el tamaño N debe ser de 2^8, 2^10,
+ 2^12, 2^16, 2^18 y 2^20. Debe generar una gráfica considerando el tiempo
+ representativo de cada función. Anexar la gráfica en su reporte.
+ e) (1.5 puntos) En su reporte, brindar comentarios acerca del experimento y los
+ tiempos de ejecución generados para diferentes N. Incluir comentarios acerca de los
+ tipos de dato y su relación con lo codificado en los diferentes lenguajes de
+ programación. Así mismo, comentar si esperaría que el resultado se replique al
+ utilizar diferentes tipos de dato.
+ f)
+ (1.5 puntos) Brindar comentarios en su reporte acerca de sus implementaciones y su
+ aprovechamiento de las técnicas de localidad. Comentar si bajo las características
+ de su PC es posible aprovechar la memoria caché en alguno de sus niveles"
