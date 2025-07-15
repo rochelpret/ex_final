@@ -1,0 +1,223 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define IMAGEN_SIZE 1024 // COMPLETAR
+#define TAMAÑO_PAGINA 4096
+#define DOUBLES_POR_PAGINA (TAMAÑO_PAGINA / sizeof(double))
+#define TLB_ENTRADAS 64 // COMPLETAR
+#define CICLOS_TLB_HIT  1 // COMPLETAR
+#define CICLOS_TLB_MISS 10  // COMPLETAR
+#define CICLOS_PAGE_FAULT 1000 // COMPLETAR
+
+// Variables globales para simulación
+int tlb_hits = 0;
+int tlb_misses = 0;
+int page_faults = 0;
+int tlb_tabla[TLB_ENTRADAS]; // Simulación de TLB
+
+// Procesamiento de imagen por filas
+int procesar_imagen_filas(double *imagen, double *resultado, int N) {
+    int ciclos_totales = 0;
+    
+    tlb_hits = 0;
+    tlb_misses = 0;
+    page_faults = 0;
+    
+    // Inicializar TLB
+    for (int i = 0; i < TLB_ENTRADAS; i++) {
+        tlb_tabla[i] = -1;
+    }
+    for (int fila = 0; fila < N; fila++) {
+        for (int col = 0; col < N; col++) {
+            int indice = fila * N + col; 
+            int pagina = indice / DOUBLES_POR_PAGINA;
+
+            // Simular acceso a TLB
+            int tlb_hit = 0;
+            for (int j = 0; j < TLB_ENTRADAS; j++) {
+                if (tlb_tabla[j] == pagina) {
+                    tlb_hit = 1;
+                    tlb_hits++;
+                    ciclos_totales += CICLOS_TLB_HIT; // se le aumenta el ciclo del tlb si es hit
+                    break;
+                }
+            }
+            
+            if (!tlb_hit) {
+                tlb_misses++;
+                ciclos_totales += CICLOS_TLB_MISS; //aumenta el ciclo de miss del TLB
+
+                // Actualizar TLB (reemplazo simple)
+                tlb_tabla[tlb_misses % TLB_ENTRADAS] = pagina;
+                
+                // Simular page fault ocasional (ajustar lógica para simulación si es necesario)
+                if (pagina > 100) { 
+                    page_faults++;
+                    ciclos_totales += CICLOS_PAGE_FAULT; //se le aumenta un ciclo de page fault
+                }
+            }            
+            // filtro
+            resultado[indice] = imagen[indice] * 1.5;
+        }
+    }
+    
+    return ciclos_totales;
+}
+
+// COMPLETAR: Procesar imagen por columnas (acceso con saltos)
+//es casi parecido al de filas:
+int procesar_imagen_columnas(double *imagen, double *resultado, int N) {
+    int ciclos_totales = 0;
+    tlb_hits = 0;
+    tlb_misses = 0;
+    page_faults = 0;
+    
+    // Inicializar TLB
+    for (int i = 0; i < TLB_ENTRADAS; i++) {
+        tlb_tabla[i] = -1;
+    }
+    
+    for (int col = 0; col < N; col++) { // Bucle exterior para columnas
+        for (int fila = 0; fila < N; fila++) { // Bucle interior para filas
+            int indice = col * N + fila; // El cálculo del índice es el mismo
+            int pagina = indice / DOUBLES_POR_PAGINA;
+            
+            // Simular acceso a TLB
+            int tlb_hit = 0;
+            for (int j = 0; j < TLB_ENTRADAS; j++) {
+                if (tlb_tabla[j] == pagina) {
+                    tlb_hit = 1;
+                    tlb_hits++;
+                    ciclos_totales += CICLOS_TLB_HIT;//se le aumenta un ciclo de tlb hit
+                    break;
+                }
+            }
+            
+            if (!tlb_hit) {
+                tlb_misses++;
+                ciclos_totales += CICLOS_TLB_MISS;//se le aumenta un ciclo de tlb miss
+
+                // Actualizar TLB (reemplazo simple)
+                tlb_tabla[tlb_misses % TLB_ENTRADAS] = pagina;
+                
+                // Simular page fault ocasional
+                if (pagina > 100) {  //igual que en el caso de filas
+                    page_faults++;
+                    ciclos_totales += CICLOS_PAGE_FAULT; //se le aumenta un ciclo de page fault
+                }
+            }            
+            // filtro
+            resultado[indice] = imagen[indice] * 1.5; //usamos el filtro pedido: "usando filtro resultado[i] = imagen [i]*1.5."
+        }
+    }
+    return ciclos_totales;
+}
+
+int calcular_working_set(int N, int patron) {
+    if (patron == 1) {
+        // En el mejor caso, solo necesitamos las páginas que estamos procesando actualmente
+        int paginas_por_fila = (N * sizeof(double) + TAMAÑO_PAGINA - 1) / TAMAÑO_PAGINA;
+        return paginas_por_fila + 1; 
+    } else {
+        // En el peor caso, cada acceso puede estar en una página diferente
+        int total_paginas = (N * N * sizeof(double) + TAMAÑO_PAGINA - 1) / TAMAÑO_PAGINA;
+        return total_paginas; 
+    }
+
+}
+
+
+
+double calcular_overhead(int ciclos_virtuales, int elementos) {
+// Calcular overhead de memoria virtual
+    int ciclos_ideales = elementos;
+    return ((double)(ciclos_virtuales - ciclos_ideales) / ciclos_ideales) * 100.0;
+}
+
+int main() {
+
+    int N = IMAGEN_SIZE;
+
+    double *imagen = malloc(N * N * sizeof(double)); //N tamaño de imagen
+    double *resultado_filas = malloc(N * N * sizeof(double));
+    double *resultado_columnas = malloc(N * N * sizeof(double));
+    
+    if (!imagen || !resultado_filas || !resultado_columnas) {
+        printf("Error: No se pudo asignar memoria\n");
+        return 1;
+    }
+    
+    // Imagen
+    srand(52);
+    for (int i = 0; i < N * N; i++) {
+        imagen[i] = (double)(rand() % 4096);
+    }
+    
+    printf("\n=== PROCESAMIENTO POR FILAS ===\n");
+    clock_t start_ciclo_filas, end_ciclo_filas;//para medir el tiempo de filas
+    double time_ciclo_filas; //para medir el tiempo de filas
+
+    start_ciclo_filas=clock();
+    int ciclos_filas = procesar_imagen_filas(imagen, resultado_filas, N);
+    end_ciclo_filas=clock();
+    time_ciclo_filas=((double) (end_ciclo_filas-start_ciclo_filas))/CLOCKS_PER_SEC;
+
+    // Variables de filas
+    int pf_filas = page_faults;
+    int tlb_h_filas = tlb_hits;
+    int tlb_m_filas = tlb_misses;
+    
+    
+    double tlb_hit_rate_filas = (double)tlb_h_filas / (tlb_h_filas + tlb_m_filas) * 100;
+    double overhead_filas = calcular_overhead(ciclos_filas, N*N);
+    int working_set_filas = calcular_working_set(N, 1); //patron==1 caso filas
+    
+    printf("Ciclos totales: %d\n", ciclos_filas);
+    printf("Page faults: %d\n", pf_filas); 
+    printf("TLB hits: %d, misses: %d\n", tlb_h_filas, tlb_m_filas);
+    printf("TLB hit rate: %.1f%%\n", tlb_hit_rate_filas);
+    printf("Overhead total: %.1f%%\n", overhead_filas);
+    printf("Working set teórico: %d páginas\n", working_set_filas);
+    printf("Tiempo de ciclo de filas: %f seg\n", time_ciclo_filas);//impresion tiempo de ciclo
+    // COMPLETAR: Procesamiento por columnas
+    printf("\n=== PROCESAMIENTO POR COLUMNAS ===\n");
+    clock_t start_ciclo_col, end_ciclo_col;//para medir el tiempo de columnas
+    double time_ciclo_col; //para medir el tiempo de columnas
+    // COMPLETAR
+
+    start_ciclo_col=clock();
+    int ciclos_columnas = procesar_imagen_columnas(imagen, resultado_columnas, N);
+    end_ciclo_col=clock();
+    time_ciclo_col=((double) (end_ciclo_col-start_ciclo_col))/CLOCKS_PER_SEC;
+
+
+    // Variables de columnas
+    int pf_columnas = page_faults;
+    int tlb_h_columnas = tlb_hits;
+    int tlb_m_columnas = tlb_misses;
+    
+    double tlb_hit_rate_columnas = (double)tlb_h_columnas / (tlb_h_columnas + tlb_m_columnas) * 100;
+    double overhead_columnas = calcular_overhead(ciclos_columnas, N*N);
+    int working_set_columnas = calcular_working_set(N, 1);
+    
+    printf("Ciclos totales: %d\n", ciclos_columnas);
+    printf("Page faults: %d\n", pf_columnas); 
+    printf("TLB hits: %d, misses: %d\n", tlb_h_columnas, tlb_m_columnas);
+    printf("TLB hit rate: %.1f%%\n", tlb_hit_rate_columnas);
+    printf("Overhead total: %.1f%%\n", overhead_columnas);
+    printf("Working set teórico: %d páginas\n", working_set_columnas);
+    printf("Tiempo de ciclo de columnas: %f seg\n", time_ciclo_col);//impresion tiempo de ciclo
+    // Liberar memoria
+    free(imagen);
+    free(resultado_filas);
+    free(resultado_columnas);
+    
+    return 0;
+}
+
+
+
+
+
+
