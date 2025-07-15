@@ -1,0 +1,129 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define MAX_PAGINAS_WEB 100 // Completar: A typical number of pages
+#define CICLOS_HIT 1
+#define CICLOS_PAGE_FAULT 1000
+#define NUM_ACCESOS 200 // Completar: A reasonable number of accesses for simulation
+
+
+// patrones
+char *nombres_patron[] = {"", "ALEATORIO  ", "REPETITIVO "};
+
+// Algoritmo FIFO para reemplazo de páginas
+int algoritmo_fifo(int *accesos, int num_accesos, int frames) {
+    int *memoria = calloc(frames, sizeof(int));
+    int puntero_fifo = 0;
+    int page_faults = 0;
+    // Inicializar frames como vacíos 
+    for (int i = 0; i < frames; i++) {
+        memoria[i] = -1;
+    }
+    
+    for (int i = 0; i < num_accesos; i++) {
+        int pagina_solicitada = accesos[i];
+        int encontrada = 0;
+        
+        // Buscar si ya existe página en memoria
+        for (int j = 0; j < frames; j++) {
+            if (memoria[j] == pagina_solicitada) {
+                encontrada = 1;
+                break;
+            }
+        }
+        
+        if (!encontrada) {
+            page_faults++;
+            
+            // Implementar reemplazo FIFO
+            memoria[puntero_fifo] = pagina_solicitada; //se coloca la página solicitada
+            puntero_fifo = (puntero_fifo + 1) % frames; //el puntero_fifo aumenta y se calcula su resto con los frames
+        }
+    }
+    free(memoria);
+    return page_faults;
+}
+
+// Patrones de acceso 
+void generar_patron(int *accesos, int cantidad, int tipo) {
+    srand(42); // Semilla fija
+        
+    if (tipo == 1) {
+        // Patrón ALEATORIO 
+        for (int i = 0; i < cantidad; i++) {
+            accesos[i] = rand() % MAX_PAGINAS_WEB; // se genera un número aleatorio entre 0 y MAX_PAGINAS_WEB-1
+        }
+        
+    } else if (tipo == 2) {
+        // Patrón repetitivo - 5 accesos consecutivos 
+        // antes de avanzar a la siguiente página 
+        for (int i = 0; i < cantidad; i++) {
+            accesos[i] = (i / 5) % MAX_PAGINAS_WEB; 
+        }
+    }
+}
+
+// Detectar Belady's anomaly
+int detectar_belady_anomaly(int *accesos, int num_accesos) {
+    
+    int page_faults_16 = algoritmo_fifo(accesos, num_accesos, 16);
+    int page_faults_32 = algoritmo_fifo(accesos, num_accesos, 32);
+    
+    printf("   FIFO con 16 frames: %d page faults\n", page_faults_16);
+    printf("   FIFO con 32 frames: %d page faults\n", page_faults_32);
+    
+    // Detectar si hay anomalía
+    if (page_faults_32 > page_faults_16) {
+        printf("¡ANOMALÍA DETECTADA!\n");
+        printf("Con más frames hubo MÁS page faults que con menos frames\n");
+        return 1;
+    } else {
+        printf("Comportamiento normal (más frames = menos page faults)\n");
+        return 0;
+    }
+} 
+
+// Función hit rate
+double calcular_hit_rate(int page_faults, int total_accesos) {
+    return ((double)(total_accesos - page_faults) / total_accesos) * 100.0;
+}
+
+// Función ciclos totales
+int calcular_ciclos_totales(int page_faults, int total_accesos) {
+    int hits = total_accesos - page_faults;
+    return (hits * CICLOS_HIT) + (page_faults * CICLOS_PAGE_FAULT);
+}
+
+int main() {
+        
+    int *accesos = malloc(NUM_ACCESOS * sizeof(int)); 
+
+    // Probar los patrones de acceso
+    for (int tipo = 1; tipo <= 2; tipo++) {
+        generar_patron(accesos, NUM_ACCESOS, tipo);
+        // Prueba con 16 frames
+        int pf_16 = algoritmo_fifo(accesos, NUM_ACCESOS, 16);
+        double hr_16 = calcular_hit_rate(pf_16, NUM_ACCESOS);
+        int ciclos_16 = calcular_ciclos_totales(pf_16, NUM_ACCESOS);
+        printf("%-12s %-8d %-12d %-12.1f %-15d\n", nombres_patron[tipo], 16, pf_16, hr_16, ciclos_16); 
+        printf("\n");
+        detectar_belady_anomaly(accesos, NUM_ACCESOS);
+        printf("\n");
+
+        //Prueba con 32 frames:
+        int pf_32 = algoritmo_fifo(accesos, NUM_ACCESOS, 32);
+        double hr_32 = calcular_hit_rate(pf_32, NUM_ACCESOS);
+        int ciclos_32 = calcular_ciclos_totales(pf_32, NUM_ACCESOS);
+        printf("%-12s %-8d %-12d %-12.1f %-15d\n", nombres_patron[tipo], 32, pf_32, hr_32, ciclos_32);  
+        printf("\n");
+        detectar_belady_anomaly(accesos, NUM_ACCESOS);
+        printf("\n");
+
+    }
+    
+    free(accesos);
+    return 0;
+}
+
+
