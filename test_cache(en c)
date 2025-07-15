@@ -1,0 +1,82 @@
+#include <stdio.h>
+
+void test_cache (float *a, float *b, float *c, float *d, int N, int M)
+{
+    //printf("%p \n",a);
+    //printf("%p \n",b);
+    for (int i = 0;i < N; i = i + 1){
+                for (int j = 0; j < M; j = j + 1) {
+                        a[i*M+j] = 2/b[i*M+j] *c[i*M+j];
+                        d[i*M+j] = a[i*M+j] + c[i*M+j];
+                }
+        }
+}
+void test_cache2 (float *a, float *b, float *c, float *d, int N, int M)
+{   //printf("%p \n",a);
+    //printf("%p \n",b);
+    
+        for (int i = 0;i < N; i = i + 1){
+                for (int j = 0; j < M; j = j + 1) {
+                    a[i*M+j] = 2/b[i*M+j] *c[i*M+j];
+                }
+        }
+
+    for (int i = 0;i < N; i = i + 1){
+                for (int j = 0; j < M; j = j + 1){
+                    d[i*M+j] = a[i*M+j] + c[i*M+j];
+                }
+        }
+
+}
+
+
+int main(){
+	int N=5, M=7;
+	float a[M], b[M], c[M], d[M];
+	test_cache(a,b,c,d,N,M);
+	test_cache2(a,b,c,d,N,M);
+	return 0;
+}
+
+
+
+
+"
+Explicar cómo se reflejan los conceptos de memoria local y temporal en ambos modos de
+ trabajo. ¿Cuál de los dos aprovecha mejor estos conceptos? Justificar con ejemplos.
+ PRIMERO PARA TEST_CACHE:
+ Localidad Espacial:
+ • Dentro del bucle interno, a medida que j incrementa, los elementos a[i*M+j], 
+b[i*M+j], c[i*M+j] y d[i*M+j] se acceden de forma secuencial y contigua en la 
+memoria. 
+• Cuando se accede a b[i*M+j], por ejemplo, se carga una línea de caché que 
+probablemente incluye b[i*M+j+1], b[i*M+j+2], etc. Esto es excelente para la 
+localidad espacial, ya que los siguientes accesos al mismo arreglo se beneficiarán 
+de que los datos ya estén en caché.
+ Localidad Temporal:
+• El elemento a[i*M+j] es escrito en la primera operación y luego leído 
+inmediatamente después en la segunda operación, todo dentro de la misma 
+iteración del bucle interno. Esto significa que a[i*M+j] tiene una excelente localidad 
+temporal, ya que se reutiliza instantáneamente. 
+• De manera similar, c[i*M+j] es leído en la primera operación y luego leído 
+nuevamente en la segunda operación, también dentro de la misma iteración. Esto 
+también demuestra una muy buena localidad temporal para c[i*M+j]. 
+• Los elementos b[i*M+j] y d[i*M+j] se acceden una vez por iteración del bucle 
+interno.
+ AHORA ANALIZAMOS PARA TEST_CACHE2:
+ • El elemento a[i*M+j] se escribe en el primer bloque de bucles. Luego, el primer bloque de
+ bucles completa su ejecución para todos los elementos. Solo después, el segundo bloque
+ de bucles comienza a leer a[i*M+j]. 
+• Similarmente, c[i*M+j] se lee en el primer bloque de bucles y se lee de nuevo en el 
+segundo bloque de bucles.
+ En conclusion, La función test_cache (bucles combinados) aprovecha mejor los conceptos
+ de localidad de memoria, particularmente la localidad temporal.
+ En test_cache, el valor a[i*M+j] se calcula y se almacena, y luego se utiliza
+ inmediatamente para calcular d[i*M+j], todo dentro de la misma iteración del bucle interno.
+ Lo mismo ocurre con c[i*M+j]. 
+Ejemplos:
+ Sea que la CPU necesita a[0]. Lo trae a la caché. Como a[0] se usa de inmediato para la
+ siguiente operación, es muy probable que aún esté en la caché, evitando tener que ir a la
+ memoria principal (más lenta) por segunda vez. Esto maximiza el "hit rate" (tasa de
+ aciertos) de la caché para estos datos
+"
