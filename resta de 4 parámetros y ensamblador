@@ -1,0 +1,51 @@
+#include <stdio.h> 
+#include <stdlib.h>
+#include <time.h>
+
+void calcula_resta_total(int *x, int *y, int z, int n) {
+    //Se cumple los 4 parámetros de entrada
+    for (int i = 0; i < n; ++i) {
+        if (i % 2 == 0) { // Si el índice i es par
+            y[i] = x[i] - z; //se cumple lo pedido
+        }
+    }
+}
+
+int main(){
+    int n=15; //asignamos un n cualquiera como no se especifica
+    int x[n], y[n], z;
+    //Se inicializa el generador de números aleatorios como no se
+    srand(time(NULL));
+    for (int j = 0; j < n; j++){
+        x[j]=1 + (rand() % 100); // Como no especifica, se genera un número entre 1 y 100
+    }
+    calcula_resta_total(x,y,z,n);
+    return 0;
+}
+
+
+
+"
+ 0000000000000000 <calcula_resta_total>:
+ 1. endbr64   //nada que ver, no afecta al rendimiento del programa
+ 2. xor    eax,eax   //eax=0
+ 3. cmp    ecx,eax   //compara ecx con eax que ahora es cero
+ 4. jle    1e <calcula_resta_total+0x1e> // Salta a la dirección 0x1e si ecx<=eax, es decir, si ecx<=0
+ 5. test   al,0x1   //realiza una operación lógica and entre al(parte baja de eax) y 1, para ver si el bit 
+menos significativo está activado(ver si es par o impar)
+ 6. jne    19 <calcula_resta_total+0x19>  //si el bit menos significativo de al es 1(impar), salta a la 
+instrucción 0x19 para evitar la resta
+ 7. mov    r8d,DWORD PTR [rdi+rax*4]  //Carga en r8d el entero de 32bits ubicado en la dirección 
+rdi+rax*4. Este mismo accede a un elemento del array fuente(de enteros)
+ 8. sub    r8d,edx   //resta el valor de edx con r8d. Calcula array[i]-edx
+ 9. mov    DWORD PTR [rsi+rax*4],r8d  //guarda r8d en el array apuntado por rsi en la posicion 
+rax
+ 10. inc    rax  //incrementa el índice rax, osea i++
+ 11. jmp    6 <calcula_resta_total+0x6>   //salta a la instrucción 6 para seguir el ciclo. Ello genera un 
+bucle
+ 12. ret  //finaliza la función y retorna
+ Cantidad de instrucciones: 11 útiles y 1 no útil que es endbr64
+"
+
+
+
