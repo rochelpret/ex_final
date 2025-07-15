@@ -1,0 +1,47 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+void imprimir(int *arr, int i){
+    printf("Los valores del areglo son: [");
+    for(int k=0; k<i; k++){
+        printf("%d", arr[k]);
+        if(k<(i-1)){
+            printf(",");
+        }else{
+            printf("]\n");
+        }
+    }
+
+}
+
+int main (){
+    int op; //Para que el usuario pueda ingresar un número
+    int i=0; //para calcular y reasignar un nuevo tamaño hasta que el usuario elija -1
+    int tam_nuevo;
+    //Creamos un arreglo dinámico de tamaño de 2
+    int *arr = calloc(2,sizeof(int));
+    while(1){ //mientras sea diferente de -1 sigue la iterativa
+        i=i+1;
+        printf("Ingrese un valor para almacenarlo en el arreglo, (-1) acaba el arreglo:\n");
+        scanf("%d",&op);
+        if(op!=-1){
+            if(i>2){
+                tam_nuevo=i; //cuanto itere más de dos veces se le reasignará un tamaño más hasta que el usuaio ingrese -1
+                arr=(int*) realloc(arr, tam_nuevo*sizeof(int)); //se le redimensiona
+            }
+            arr[i]=op;
+            if (arr == NULL) { //mensaje de validación
+                printf("Error: No se pudo asignar memoria.\n");
+            }else{ //si se asignó correctamente
+                printf("Se asigno correctamente el numero %d\n",op);
+            }
+        }else{
+            printf("El usuario ingresó un (-1), el programa se va a dejar de ejecutar\n");
+            break; //para que se detenga el programa
+        }
+    }
+    imprimir(arr,i); //se imprime los valores del arreglo
+    free(arr); ///se libera la memoria
+    
+    return 0;
+}
