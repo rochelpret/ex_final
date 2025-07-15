@@ -1,0 +1,35 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
+
+
+int main (){
+    int tam, num_aleatorio;
+    printf("Ingrese el tamano se su arreglo: \n");
+    scanf("%d", &tam);
+    //se declara el arreglo malloc:
+    int *arr=(int*)malloc(tam*sizeof(int));
+    //vamos a rellenar el arreglo con numeros aleatorios del 1 al 1000
+    for (int i = 0; i < tam; i++){
+        num_aleatorio = random() % 1000 +1 ; // para que no inicie en 0
+        arr[i]=num_aleatorio;
+        if (arr == NULL) { //mensaje de validación
+            printf("Error: No se pudo asignar memoria.\n");
+        }else{ //si se asignó correctamente
+            printf("Se asigno correctamente el numero %d\n",num_aleatorio);
+        }
+    }
+    //imprimimos la copia del arreglo:
+    printf("Los valores del areglo arr son: [");
+    for(int k=0; k<tam; k++){
+        printf("%d", arr[k]);
+        if(k<(tam-1)){
+            printf(",");
+        }else{
+            printf("]\n");
+        }
+    }
+    free(arr);
+    return 0;
+}
