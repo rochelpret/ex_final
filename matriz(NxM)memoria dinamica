@@ -1,0 +1,33 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+
+int main (){
+    int N, M;  //matriz NxM
+    int i, j;
+    //N filas y M columnas
+    printf("Ingrese el valor de N: \n");
+    scanf("%d", &N);
+    printf("Ingrese el valor de M: \n");
+    scanf("%d", &M);
+    printf("Su matriz es de tamanho %dx%d \n", N, M);
+    int matriz [N][M];
+    srand(time(NULL));
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < M; j++) {
+            matriz[i][j] = rand() % 100; // Genera números aleatorios entre 0 y 99
+        }
+    }
+    if (matriz == NULL) { //mensaje de validación
+        printf("Error: No se pudo asignar memoria.\n");
+    }
+    printf("Matriz con números aleatorios:\n");
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < M; j++) {
+            printf("%d ", matriz[i][j]);
+        }
+        printf("\n");
+    }
+    return 0;
+}
